@@ -10,13 +10,10 @@ from pyspark.ml.feature import Word2Vec
 from pyspark.ml.classification import LogisticRegression
 
 maxLines = 500000
-trainingFile = "/home/omar/sentiment-train.csv" # File must be CSV
-trainingFileTextKey = 3
-trainingFileSentimentKey = 1
+trainingFile = "/home/omar/sentiment-train.csv" # Must be CSV. Column 4 contains text, Column 2 contains sentiment.
 
 def processTweetText(tweet):
     new_tweet = ''
-
     for word in tweet.split():
         if re.match('^.*@.*', word):
             word = '<SCREENNAME/>'
@@ -28,7 +25,6 @@ def processTweetText(tweet):
         word = word.replace('&gt;', ' > ')
         word = word.replace('&lt;', ' < ')
         new_tweet = ' '.join([new_tweet, word])
-
     return re.sub('\s+', ' ', new_tweet.strip())
 
 data = sc.textFile(trainingFile)
@@ -37,7 +33,7 @@ header = data.first()
 rdd = data.filter(lambda row: row != header)
 
 r = rdd.mapPartitions(lambda x : csv.reader(x))
-r2 = r.map(lambda x: (processTweetText(x[trainingFileTextKey]), int(x[trainingFileSentimentKey])))
+r2 = r.map(lambda x: (processTweetText(x[3]), int(x[1])))
 
 parts = r2.map(lambda x: Row(sentence=x[0], label=int(x[1])))
 partsDF = spark.createDataFrame(parts)
