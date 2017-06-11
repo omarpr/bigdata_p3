@@ -9,6 +9,11 @@ from pyspark.ml.feature import StopWordsRemover
 from pyspark.ml.feature import Word2Vec
 from pyspark.ml.classification import LogisticRegression
 
+maxLines = 500000
+trainingFile = "/home/omar/sentiment-train.csv" # File must be CSV
+trainingFileTextKey = 3
+trainingFileSentimentKey = 1
+
 def processTweetText(tweet):
     new_tweet = ''
 
@@ -26,15 +31,13 @@ def processTweetText(tweet):
 
     return re.sub('\s+', ' ', new_tweet.strip())
 
-maxLines = 500000
-
-data = sc.textFile("/home/omar/sentiment-train.csv")
+data = sc.textFile(trainingFile)
 
 header = data.first()
 rdd = data.filter(lambda row: row != header)
 
 r = rdd.mapPartitions(lambda x : csv.reader(x))
-r2 = r.map(lambda x: (processTweetText(x[3]), int(x[1])))
+r2 = r.map(lambda x: (processTweetText(x[trainingFileTextKey]), int(x[trainingFileSentimentKey])))
 
 parts = r2.map(lambda x: Row(sentence=x[0], label=int(x[1])))
 partsDF = spark.createDataFrame(parts)
