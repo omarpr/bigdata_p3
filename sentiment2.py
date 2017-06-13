@@ -7,26 +7,20 @@ from pyspark.ml import Pipeline
 from pyspark.ml.feature import Tokenizer, StopWordsRemover, HashingTF
 from pyspark.ml.classification import LogisticRegression
 
+trainPercent = 0.6
+testPercent = 1 - trainPercent
 maxLines = 500000
 trainingFile = "/home/omar/sentiment-train.csv" # Must be CSV. Column 4 contains text, Column 2 contains sentiment.
 
 def processTweetText(tweet):
-    new_tweet = ''
-    tweet = tweet.strip().translate(str.maketrans('','',string.punctuation.replace('@','').replace('#','')))
-    tweet = re.sub('\d+', '', tweet.strip())
+    tweet = tweet.strip()
+    tweet = re.sub(r'[^\s]*htt(p|ps)://[^\s]*', 'LINK', tweet)
+    tweet = re.sub(r'@[^\s]*', 'SCREENNAME', tweet)
+    tweet = tweet.replace('#', 'HASHTAG ').replace('&quot;', ' \" ').replace('&amp;', ' & ').replace('&gt;', ' > ').replace('&lt;', ' < ')
+    tweet = tweet.translate(str.maketrans('', '', string.punctuation))
+    tweet = re.sub('\d+', '', tweet)
     tweet = re.sub('\s+', ' ', tweet)
-    for word in tweet.split():
-        if re.match('^.*@.*', word):
-            word = '<SCREENNAME/>'
-        if re.match('^.*http://.*', word):
-            word = '<LINK/>'
-        word = word.replace('#', '<HASHTAG/> ')
-        word = word.replace('&quot;', ' \" ')
-        word = word.replace('&amp;', ' & ')
-        word = word.replace('&gt;', ' > ')
-        word = word.replace('&lt;', ' < ')
-        new_tweet = ' '.join([new_tweet, word])
-    return new_tweet.strip()
+    return tweet.strip()
 
 data = sc.textFile(trainingFile)
 
@@ -41,13 +35,18 @@ partsDF = spark.createDataFrame(parts).orderBy(rand()).limit(maxLines)
 
 tokenizer = Tokenizer(inputCol="sentence", outputCol="words")
 remover = StopWordsRemover(inputCol="words", outputCol="base_words")
+hashingTF = HashingTF(numFeatures=10000, inputCol="base_words", outputCol="features")
 
-hashingTF = HashingTF(inputCol="base_words", outputCol="features")
-lr = LogisticRegression(maxIter=100, regParam=0.001, elasticNetParam=0.0001)
+lr = LogisticRegression(maxIter=10000, regParam=0.001, elasticNetParam=0.0001)
+
 pipeline = Pipeline(stages=[tokenizer, remover, hashingTF, lr])
 
-lrModel = pipeline.fit(partsDF)
-lrResult = lrModel.transform(partsDF)
+splits = partsDF.randomSplit([trainPercent, testPercent], 1291)
+trainSet = splits[0]
+testSet = splits[1]
 
-avg = lrResult.where('label == prediction').count() / maxLines
-print(avg) #0.996
+lrModel = pipeline.fit(trainSet)
+lrResult = lrModel.transform(testSet)
+
+avg = lrResult.where('label == prediction').count() / (maxLines * testPercent)
+print(avg)
