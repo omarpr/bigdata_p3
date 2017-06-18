@@ -3,7 +3,7 @@
 import re, csv, string
 from pyspark.sql import Row
 from pyspark.sql.functions import rand
-from pyspark.ml import Pipeline
+from pyspark.ml import Pipeline, PipelineModel
 from pyspark.ml.feature import Tokenizer, StopWordsRemover, HashingTF
 from pyspark.ml.classification import LogisticRegression
 
@@ -35,18 +35,24 @@ partsDF = spark.createDataFrame(parts).orderBy(rand()).limit(maxLines)
 
 tokenizer = Tokenizer(inputCol="sentence", outputCol="words")
 remover = StopWordsRemover(inputCol="words", outputCol="base_words")
-hashingTF = HashingTF(numFeatures=10000, inputCol="base_words", outputCol="features")
-
-lr = LogisticRegression(maxIter=10000, regParam=0.001, elasticNetParam=0.0001)
+hashingTF = HashingTF(numFeatures=6000, inputCol="base_words", outputCol="features")
+lr = LogisticRegression(maxIter=10, regParam=0.05, elasticNetParam=0.025, family="binomial")
 
 pipeline = Pipeline(stages=[tokenizer, remover, hashingTF, lr])
 
-splits = partsDF.randomSplit([trainPercent, testPercent], 1291)
-trainSet = splits[0]
-testSet = splits[1]
+(trainSet, testSet) = partsDF.randomSplit([trainPercent, testPercent], 1291)
 
 lrModel = pipeline.fit(trainSet)
 lrResult = lrModel.transform(testSet)
 
 avg = lrResult.where('label == prediction').count() / (maxLines * testPercent)
 print(avg)
+
+#Adjust maxIter to the number of iterations needed to reach convergence (check if it decreases less than pow(10,-3))
+#import matplotlib.pyplot as plt
+#a = lrModel.stages[-1].summary.objectiveHistory
+#plt.plot(a)
+#plt.show()
+
+#lrModel.write().overwrite().save('/home/omar/p3/sentimentAnalysisModel')
+#model = PipelineModel.load('/home/omar/p3/sentimentAnalysisModel')
