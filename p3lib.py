@@ -38,7 +38,7 @@ def resultToFiles(drd, file_dir, data_name, time_freq):
         ts = int(time.mktime(x['created_at'].timetuple()))
         if (ts not in out):
             out[ts] = []
-        out[ts].append((x['created_at'], x['tweet'], x['prediction']))
+        out[ts].append((ts, x['tweet'], x['prediction']))
 
     for x in out:
         f = file_dir + data_name + '.txt-' + str(x)

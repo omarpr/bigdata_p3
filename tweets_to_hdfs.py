@@ -1,4 +1,4 @@
-# /opt/spark/bin/spark-submit --packages org.apache.spark:spark-streaming-kafka-0-8_2.11:2.1.1 --conf spark.executor.heartbeatInterval=3600s tweets_to_hdfs.py
+# /opt/spark/bin/spark-submit --packages org.apache.spark:spark-streaming-kafka-0-8_2.11:2.1.1 tweets_to_hdfs.py
 
 from p3lib import *
 import json, re, string, time

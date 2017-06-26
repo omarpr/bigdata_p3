@@ -1,4 +1,4 @@
-# /opt/spark/bin/spark-submit --packages org.apache.spark:spark-streaming-kafka-0-8_2.11:2.1.1 --conf spark.executor.heartbeatInterval=3600s build_model.py
+# /opt/spark/bin/spark-submit --packages org.apache.spark:spark-streaming-kafka-0-8_2.11:2.1.1 build_model.py
 
 from p3lib import *
 import re, csv, string
@@ -15,8 +15,8 @@ maxLines = 500000
 trainingFile = '/home/omar/sentiment-train.csv' # Must be CSV. Column 4 contains text, Column 2 contains sentiment.
 modelFile = '/home/omar/p3/sentimentAnalysisModel'
 
-sc = SparkContext(appName="KafkaSparkStream-p3-build_model")
-sc.setLogLevel("WARN")
+sc = SparkContext(appName='KafkaSparkStream-p3-build_model')
+sc.setLogLevel('WARN')
 
 spark = SparkSession(sc)
 
