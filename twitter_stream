@@ -1,0 +1,11 @@
+#!/bin/bash
+COUNTER=1
+
+while :
+do
+  echo "Execution No. $COUNTER"
+  let COUNTER=COUNTER+1
+
+  python3 twitter_stream.py
+  sleep 5
+done

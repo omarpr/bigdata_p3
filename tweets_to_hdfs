@@ -1,0 +1,11 @@
+#!/bin/bash
+COUNTER=1
+
+while :
+do
+  echo "Execution No. $COUNTER"
+  let COUNTER=COUNTER+1
+
+  /opt/spark/bin/spark-submit --packages org.apache.spark:spark-streaming-kafka-0-8_2.11:2.1.1 --conf spark.executor.heartbeatInterval=3600s tweets_to_hdfs.py
+  sleep 5
+done
