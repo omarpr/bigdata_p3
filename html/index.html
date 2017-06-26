@@ -1,8 +1,11 @@
 <html>
   <head>
     <title>Big Data Project III: Trump Tweets Analytics</title>
-    <link rel="stylesheet" type="text/css" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
     <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-table/1.11.1/bootstrap-table.min.css">
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-table/1.11.1/bootstrap-table.js">
+    <script type="text/javascript" src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
     <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
     <script>
       indexes = ['tweet_sentiments'];
@@ -65,7 +68,6 @@
         });
 
         $.getJSON('files/' + i['file'], function(data) {
-          //console.log(data)
           $.each(data, function(i, obj) {
             tweets.push(obj);
             $.each(words, function (e, word) {
@@ -91,7 +93,6 @@
 
             var out = [['Sentiment', 'Tweets Count']];
             $.merge(out, words_messages[word]);
-            console.log(out);
 
             var data = google.visualization.arrayToDataTable(out);
 
@@ -103,7 +104,7 @@
             charts[index_name].draw(data, options);
           });
 
-          var table = '<tr><th width="80%">Tweet</th><th width="20%" style="text-align: right;">Sentiment</th></tr>'
+          var myData = [];
 
           $.each(tweets, function(k, v) {
             var label = 'primary';
@@ -114,10 +115,10 @@
               label_text = 'Negative';
             }
 
-            table += '<tr><td>' + v[1] + '</td><td style="text-align: right;"><span class="label label-' + label + '">' + label_text + '</span></td></tr>'
+            myData.push({tweet: v[1], sentiment: '<span class="label label-' + label + '">' + label_text + '</span>'});
           });
 
-          $('#tweets').html($(table));
+          $('#tweets').bootstrapTable({data: myData});
         });
       }
       function loadDatesSingle(index_name, cb_name) {
@@ -155,18 +156,12 @@
       <div id="tweet_sentiments_comey_chart" style="float: left; width: 350px; height: 250px;"></div>
       <br style="clear: left;" />
       <table id="tweets" class="table table-striped" style="width: 1050px;">
-        <tr>
-          <th width="80%">Tweet</th>
-          <th width="20%" style="text-align: right;">Sentiment</th>
-        </tr>
-        <tr>
-          <td>lala</td>
-          <td style="text-align: right;"><span class="label label-primary">Positive</span></td>
-        </tr>
-        <tr>
-          <td>lala</td>
-          <td style="text-align: right;"><span class="label label-danger">Negative</span></td>
-        </tr>
+        <thead>
+          <tr>
+            <th data-field="tweet" width="80%">Tweet</th>
+            <th data-field="sentiment" width="20%" style="text-align: right;">Sentiment</th>
+          </tr>
+        </thead>
       </table>
     </div>
   </body>
