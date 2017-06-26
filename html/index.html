@@ -71,9 +71,9 @@
             $.each(words, function (e, word) {
               if (obj[1].toLowerCase().includes(word)) {
                 if (obj[2] == 0) { // Negative Tweet
-                  words_messages[word][0][1]++;
-                } else { // Positive Tweet
                   words_messages[word][1][1]++;
+                } else { // Positive Tweet
+                  words_messages[word][0][1]++;
                 }
               }
             })
@@ -98,10 +98,6 @@
             var options = {
                 title: 'Sentiment of tweets that contains the word: "' + word + '"',
                 is3D: true,
-                slices: {
-                    0: { color: 'blue' },
-                    1: { color: 'red' }
-                },
             };
 
             charts[index_name].draw(data, options);
@@ -113,7 +109,7 @@
             var label = 'primary';
             var label_text = 'Positive';
 
-            if (v[2] == 1) {
+            if (v[2] == 0) {
               label = 'danger';
               label_text = 'Negative';
             }
