@@ -1,5 +1,5 @@
-# Big Data Analytics (CIIC 8995) Project II
-Project II of Big Data Analytics (CIIC 8995) given by Dr. Manuel Rodríguez in the University of Puerto Rico, Mayagüez Campus.
+# Big Data Analytics (CIIC 8995) Project III
+Project III of Big Data Analytics (CIIC 8995) given by Dr. Manuel Rodríguez in the University of Puerto Rico, Mayagüez Campus.
 
 An example of this is available at http://kvm_33.uprm.edu/p3/.
 
