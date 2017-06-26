@@ -1,0 +1,177 @@
+<html>
+  <head>
+    <title>Big Data Project III: Trump Tweets Analytics</title>
+    <link rel="stylesheet" type="text/css" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <script>
+      indexes = ['tweet_sentiments'];
+      index = {'tweet_sentiments' : null};
+      charts = [];
+      words = ['maga', 'dictator', 'impeach', 'drain', 'swamp', 'comey'];
+      words_messages = {};
+      tweets = [];
+
+      $(document).ready(function() {
+        google.charts.load('current', {'packages':['corechart', 'table', 'bar']});
+        google.charts.setOnLoadCallback(drawCharts);
+      });
+      function drawCharts() {
+        loadIndexes();
+      }
+      function loadIndexes() {
+        for (i = 0; i < indexes.length; i++) {
+          loadIndex(i)
+        }
+      }
+      function loadIndex(num) {
+        $.getJSON('files/' + indexes[i] + '-index.json', function(data) {
+          index[indexes[num]] = data;
+
+          var last = 0;
+          jQuery.each(index[indexes[num]], function() {
+            last = this;
+          });
+
+          if (!UrlExists('files/' + last.file)) {
+            console.log('files/' + last.file + ' not found!');
+            delete index[indexes[num]][last.ts];
+          }
+
+          receivedIndex(indexes[num]);
+        });
+      }
+      function receivedIndex(index_name) {
+        var func_name = 'loadDates_' + index_name;
+
+        if (typeof window[func_name] == 'function') {
+          eval(func_name + '()');
+        } else {
+          console.log(func_name + ' doesnt exists');
+        }
+      }
+      function loadDates_tweet_sentiments() {
+        loadDatesSingle('tweet_sentiments', 'tweet_sentiments_dates')
+
+        $('select[name=tweet_sentiments_dates]').change(function() { updateGraphs_tweet_sentiments() });
+        updateGraphs_tweet_sentiments();
+      }
+      function updateGraphs_tweet_sentiments() {
+        var opt = $('select[name=tweet_sentiments_dates] option:selected');
+        var i = index['tweet_sentiments'][opt.val()];
+        tweets = [];
+        words.forEach(function(word) {
+          words_messages[word] = [['Positive', 0], ['Negative', 0]]
+        });
+
+        $.getJSON('files/' + i['file'], function(data) {
+          //console.log(data)
+          $.each(data, function(i, obj) {
+            tweets.push(obj);
+            $.each(words, function (e, word) {
+              if (obj[1].toLowerCase().includes(word)) {
+                if (obj[2] == 0) { // Negative Tweet
+                  words_messages[word][0][1]++;
+                } else { // Positive Tweet
+                  words_messages[word][1][1]++;
+                }
+              }
+            })
+          });
+        }).then(function() {
+          $.each(words, function(e, word) {
+            index_name = 'tweet_sentiments_' + word
+            chart_name = index_name + '_chart'
+
+            if (!charts[index_name]) {
+              charts[index_name] = new google.visualization.PieChart(document.getElementById(chart_name));
+            } else {
+              charts[index_name].clearChart();
+            }
+
+            var out = [['Sentiment', 'Tweets Count']];
+            $.merge(out, words_messages[word]);
+            console.log(out);
+
+            var data = google.visualization.arrayToDataTable(out);
+
+            var options = {
+                title: 'Sentiment of tweets that contains the word: "' + word + '"',
+                is3D: true,
+                slices: {
+                    0: { color: 'blue' },
+                    1: { color: 'red' }
+                },
+            };
+
+            charts[index_name].draw(data, options);
+          });
+
+          var table = '<tr><th width="80%">Tweet</th><th width="20%" style="text-align: right;">Sentiment</th></tr>'
+
+          $.each(tweets, function(k, v) {
+            var label = 'primary';
+            var label_text = 'Positive';
+
+            if (v[2] == 1) {
+              label = 'danger';
+              label_text = 'Negative';
+            }
+
+            table += '<tr><td>' + v[1] + '</td><td style="text-align: right;"><span class="label label-' + label + '">' + label_text + '</span></td></tr>'
+          });
+
+          $('#tweets').html($(table));
+        });
+      }
+      function loadDatesSingle(index_name, cb_name) {
+        var cb = $('select[name=' + cb_name + ']');
+        var max = 0;
+        var find_max = true;
+
+        cb.empty();
+        jQuery.each(index[index_name], function() {
+          if (find_max && this.ts >= max) max = this.ts
+          cb.append($('<option>', {value: this.ts, text: this.date_range}));
+        });
+
+        cb.find('option[value=' + max + ']').prop('selected', true);
+      }
+      /* http://stackoverflow.com/questions/3646914/how-do-i-check-if-file-exists-in-jquery-or-javascript */
+      function UrlExists(url) {
+        var http = new XMLHttpRequest();
+        http.open('HEAD', url, false);
+        http.send();
+        return http.status!=404;
+      }
+    </script>
+  </head>
+  <body>
+    <div class="container-fluid">
+      <select name="tweet_sentiments_dates" style="width: 1050px;"></select>
+      <br style="clear: left;" />
+      <div id="tweet_sentiments_maga_chart" style="float: left; width: 350px; height: 250px;"></div>
+      <div id="tweet_sentiments_dictator_chart" style="float: left; width: 350px; height: 250px;"></div>
+      <div id="tweet_sentiments_impeach_chart" style="float: left; width: 350px; height: 250px;"></div>
+      <br style="clear: left;" />
+      <div id="tweet_sentiments_drain_chart" style="float: left; width: 350px; height: 250px;"></div>
+      <div id="tweet_sentiments_swamp_chart" style="float: left; width: 350px; height: 250px;"></div>
+      <div id="tweet_sentiments_comey_chart" style="float: left; width: 350px; height: 250px;"></div>
+      <br style="clear: left;" />
+      <table id="tweets" class="table table-striped" style="width: 1050px;">
+        <tr>
+          <th width="80%">Tweet</th>
+          <th width="20%" style="text-align: right;">Sentiment</th>
+        </tr>
+        <tr>
+          <td>lala</td>
+          <td style="text-align: right;"><span class="label label-primary">Positive</span></td>
+        </tr>
+        <tr>
+          <td>lala</td>
+          <td style="text-align: right;"><span class="label label-danger">Negative</span></td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
